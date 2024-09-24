@@ -1,13 +1,16 @@
-use std::sync::Arc;
+#![allow(unused)]
 
-use iommentum_backend_practice::Controller;
+use iommentum_backend_practice::{models::tickets::TicketModel, routes, Cfg, Controller};
+use sqlx::{postgres::PgPoolOptions, Executor};
 use warp::Filter;
 
 #[tokio::main]
 async fn main() {
-    let controller = Arc::new(Controller::new());
-    let health = warp::path!("health").map(move || controller.health());
+    let ticket_model = TicketModel::new(&Cfg::get().db_url).await;
+    let controller = Controller::new(ticket_model);
 
     println!("Listening on port 3000");
-    warp::serve(health).run(([127, 0, 0, 1], 3000)).await;
+    warp::serve(routes(controller))
+        .run(([127, 0, 0, 1], 3000))
+        .await;
 }
