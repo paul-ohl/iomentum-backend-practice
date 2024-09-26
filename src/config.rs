@@ -1,18 +1,5 @@
 use config::{builder::DefaultState, ConfigBuilder, Environment};
-use once_cell::sync::Lazy;
 use serde::Deserialize;
-
-static CONFIG: Lazy<Cfg> = Lazy::new(|| {
-    dotenv::dotenv().ok();
-    let cfg = ConfigBuilder::<DefaultState>::default().add_source(Environment::default());
-
-    let cfg_builder: CfgBuilder = cfg
-        .build()
-        .expect("cannot build config")
-        .try_deserialize()
-        .expect("cannot convert config");
-    cfg_builder.into()
-});
 
 pub struct Cfg {
     pub db_url: String,
@@ -39,7 +26,16 @@ impl Cfg {
             ),
         }
     }
-    pub fn get() -> &'static Self {
-        &CONFIG
+
+    pub fn init() -> Self {
+        dotenv::dotenv().ok();
+        let cfg = ConfigBuilder::<DefaultState>::default().add_source(Environment::default());
+
+        let cfg_builder: CfgBuilder = cfg
+            .build()
+            .expect("cannot build config")
+            .try_deserialize()
+            .expect("cannot convert config");
+        cfg_builder.into()
     }
 }
