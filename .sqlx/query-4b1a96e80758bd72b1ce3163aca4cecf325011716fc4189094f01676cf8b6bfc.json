@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO tickets (owner_name, concert_name, concert_date, barcode_data, price) VALUES ($1, $2, $3, $4, $5) returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Date",
+        "Text",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "4b1a96e80758bd72b1ce3163aca4cecf325011716fc4189094f01676cf8b6bfc"
+}
