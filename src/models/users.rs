@@ -2,8 +2,11 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use sqlx::{prelude::FromRow, PgPool};
 use uuid::Uuid;
+
+use crate::domain::errors::{Error, Result};
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -23,37 +26,43 @@ pub struct UserInput {
     pub role: String,
 }
 
-pub async fn get_all(db_pool: Arc<PgPool>) -> Vec<User> {
+pub async fn get_all(db_pool: Arc<PgPool>) -> Result<Vec<User>> {
     let users: Vec<User> =
         sqlx::query_as("SELECT id, username, role, created_at, updated_at FROM users")
             .fetch_all(&*db_pool)
             .await
-            .expect("Couldn't fetch users");
-    users
+            .map_err(Error::UserFetchFailed)?;
+    Ok(users)
 }
 
-pub async fn get_by_id(db_pool: Arc<PgPool>, id: Uuid) -> Option<User> {
+pub async fn get_by_id(db_pool: Arc<PgPool>, id: Uuid) -> Result<User> {
     let user: Option<User> =
         sqlx::query_as("SELECT id, username, created_at, updated_at FROM users WHERE id = $1")
             .bind(id)
             .fetch_optional(&*db_pool)
             .await
-            .expect("Couldn't fetch user");
-    user
+            .map_err(Error::UserFetchFailed)?;
+    match user {
+        Some(user) => Ok(user),
+        None => Err(Error::UserNotFound),
+    }
 }
 
-pub async fn get_by_username(db_pool: Arc<PgPool>, username: String) -> Vec<User> {
-    let user: Vec<User> = sqlx::query_as(
+pub async fn get_by_username(db_pool: Arc<PgPool>, username: String) -> Result<User> {
+    let user: Option<User> = sqlx::query_as(
         "SELECT id, username, created_at, updated_at FROM users WHERE username = $1",
     )
     .bind(username)
-    .fetch_all(&*db_pool)
+    .fetch_optional(&*db_pool)
     .await
-    .expect("Couldn't fetch user");
-    user
+    .map_err(Error::UserFetchFailed)?;
+    match user {
+        Some(user) => Ok(user),
+        None => Err(Error::UserNotFound),
+    }
 }
 
-pub async fn create(db_pool: Arc<PgPool>, new_user: UserInput) -> Option<Uuid> {
+pub async fn create(db_pool: Arc<PgPool>, new_user: UserInput) -> Result<Value> {
     let res = sqlx::query!(
         "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) returning id",
         new_user.username,
@@ -62,12 +71,12 @@ pub async fn create(db_pool: Arc<PgPool>, new_user: UserInput) -> Option<Uuid> {
     )
     .fetch_one(&*db_pool)
     .await
-    .expect("Couldn't create user")
+    .map_err(Error::UserCreationFailed)?
     .id;
-    Some(res)
+    Ok(json!({ "id": res }))
 }
 
-pub async fn update(db_pool: Arc<PgPool>, id: Uuid, new_user: UserInput) -> Option<Uuid> {
+pub async fn update(db_pool: Arc<PgPool>, id: Uuid, new_user: UserInput) -> Result<Value> {
     let res = sqlx::query!("UPDATE users SET username = $1, password_hash = $2, updated_at = $3 WHERE id = $4 returning id",
             new_user.username,
             new_user.password,
@@ -76,16 +85,16 @@ pub async fn update(db_pool: Arc<PgPool>, id: Uuid, new_user: UserInput) -> Opti
         )
             .fetch_one(&*db_pool)
             .await
-            .expect("Couldn't update user")
+            .map_err(Error::UserUpdateFailed)?
             .id;
-    Some(res)
+    Ok(json!({ "id": res }))
 }
 
-pub async fn delete_one(db_pool: Arc<PgPool>, id: Uuid) -> Option<Uuid> {
+pub async fn delete_one(db_pool: Arc<PgPool>, id: Uuid) -> Result<Value> {
     let res = sqlx::query!("DELETE FROM users WHERE id = $1 returning id", id)
         .fetch_one(&*db_pool)
         .await
-        .expect("Couldn't delete user")
+        .map_err(Error::UserDeletionFailed)?
         .id;
-    Some(res)
+    Ok(json!({ "id": res }))
 }

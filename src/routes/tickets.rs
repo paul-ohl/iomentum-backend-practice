@@ -38,10 +38,10 @@ fn get_by_id(db: Arc<PgPool>) -> impl Filter<Extract = impl Reply, Error = Rejec
 fn get_by_username(
     db: Arc<PgPool>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path!("tickets" / "by-user" / String)
+    warp::path!("tickets" / "by-user" / Uuid)
         .and(warp::get())
         .and(with_db(db))
-        .and_then(handlers::tickets::get_ticket_by_username)
+        .and_then(handlers::tickets::get_ticket_by_user_id)
 }
 
 fn create_ticket(db: Arc<PgPool>) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {

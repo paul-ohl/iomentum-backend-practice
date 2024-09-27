@@ -1,84 +1,43 @@
-use std::{convert::Infallible, sync::Arc};
+use std::sync::Arc;
 
-use serde_json::json;
 use sqlx::PgPool;
-use warp::reply;
+use warp::{reject::Rejection, reply::Reply};
 
-use crate::models::users;
+use super::errors::result_to_warp_reply;
+use crate::models::users::{self, UserInput};
 
-pub async fn get_all_users(db_pool: Arc<PgPool>) -> Result<impl warp::Reply, Infallible> {
+type ReplyRes<T> = Result<T, Rejection>;
+
+pub async fn get_all_users(db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
     let users = users::get_all(db_pool).await;
-    Ok(warp::reply::json(&users))
+    result_to_warp_reply(users)
 }
 
-pub async fn get_user_by_id(
-    id: uuid::Uuid,
-    db_pool: Arc<PgPool>,
-) -> Result<impl warp::Reply, Infallible> {
+pub async fn get_user_by_id(id: uuid::Uuid, db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
     let user = users::get_by_id(db_pool, id).await;
-    match user {
-        Some(user) => Ok(reply::with_status(
-            reply::json(&user),
-            warp::http::StatusCode::OK,
-        )),
-        None => Ok(reply::with_status(
-            reply::json(&"user not found"),
-            warp::http::StatusCode::NO_CONTENT,
-        )),
-    }
+    result_to_warp_reply(user)
 }
 
-pub async fn get_user_by_username(
-    username: String,
-    db_pool: Arc<PgPool>,
-) -> Result<impl warp::Reply, Infallible> {
+pub async fn get_user_by_username(username: String, db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
     let users = users::get_by_username(db_pool, username).await;
-    Ok(warp::reply::json(&users))
+    result_to_warp_reply(users)
 }
 
-pub async fn create_user(
-    user_input: crate::models::users::UserInput,
-    db_pool: Arc<PgPool>,
-) -> Result<impl warp::Reply, Infallible> {
+pub async fn create_user(user_input: UserInput, db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
     let user_id = users::create(db_pool, user_input).await;
-    Ok(reply::json(&json!({
-        "id": user_id
-    })))
+    result_to_warp_reply(user_id)
 }
 
 pub async fn update_user(
     id: uuid::Uuid,
-    user_input: crate::models::users::UserInput,
+    user_input: UserInput,
     db_pool: Arc<PgPool>,
-) -> Result<impl warp::Reply, Infallible> {
+) -> ReplyRes<impl Reply> {
     let user_id = users::update(db_pool, id, user_input).await;
-    match user_id {
-        Some(user) => Ok(reply::with_status(
-            reply::json(&json!({
-                "id": user
-            })),
-            warp::http::StatusCode::OK,
-        )),
-        None => Ok(reply::with_status(
-            reply::json(&"user not found"),
-            warp::http::StatusCode::NO_CONTENT,
-        )),
-    }
+    result_to_warp_reply(user_id)
 }
 
-pub async fn delete_user(
-    id: uuid::Uuid,
-    db_pool: Arc<PgPool>,
-) -> Result<impl warp::Reply, Infallible> {
+pub async fn delete_user(id: uuid::Uuid, db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
     let user_id = users::delete_one(db_pool, id).await;
-    match user_id {
-        Some(user_id) => Ok(reply::with_status(
-            reply::json(&user_id),
-            warp::http::StatusCode::OK,
-        )),
-        None => Ok(reply::with_status(
-            reply::json(&"user not found"),
-            warp::http::StatusCode::NO_CONTENT,
-        )),
-    }
+    result_to_warp_reply(user_id)
 }
