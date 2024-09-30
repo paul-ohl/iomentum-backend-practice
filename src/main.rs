@@ -8,7 +8,7 @@ async fn main() {
     let config = Cfg::init();
     let db_pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&config.db_url)
+        .connect(&config.db_url())
         .await
         .expect("cannot log to db");
     let db_pool = Arc::new(db_pool);

@@ -37,5 +37,6 @@ fn to_http_status_code(e: Error) -> StatusCode {
         Error::TicketCreationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
         Error::TicketUpdateFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
         Error::TicketDeletionFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::InvalidPassword(_) => StatusCode::BAD_REQUEST,
     }
 }
