@@ -1,0 +1,14 @@
+---
+source: tests/user_tests.rs
+assertion_line: 70
+expression: "response.json::<serde_json::Value>().await.unwrap()"
+---
+[
+  {
+    "created_at": "2024-09-30T12:47:49.324454Z",
+    "id": "b48a77d8-57b6-4ab7-98e2-bc6fb23a7f6d",
+    "role": "user",
+    "updated_at": "2024-09-30T12:47:49.324454Z",
+    "username": "test1"
+  }
+]

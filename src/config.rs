@@ -1,45 +1,33 @@
 use config::{builder::DefaultState, ConfigBuilder, Environment};
-use once_cell::sync::Lazy;
 use serde::Deserialize;
 
-static CONFIG: Lazy<Cfg> = Lazy::new(|| {
-    dotenv::dotenv().ok();
-    let cfg = ConfigBuilder::<DefaultState>::default().add_source(Environment::default());
-
-    let cfg_builder: CfgBuilder = cfg
-        .build()
-        .expect("cannot build config")
-        .try_deserialize()
-        .expect("cannot convert config");
-    cfg_builder.into()
-});
-
-pub struct Cfg {
-    pub db_url: String,
-}
-
 #[derive(Deserialize)]
-struct CfgBuilder {
-    db_user: String,
-    db_password: String,
-    db_port: String,
-}
-
-impl From<CfgBuilder> for Cfg {
-    fn from(cfg: CfgBuilder) -> Self {
-        Cfg::new(cfg.db_user, cfg.db_password, cfg.db_port)
-    }
+pub struct Cfg {
+    pub db_user: String,
+    pub db_password: String,
+    pub db_port: String,
+    pub db_name: String,
 }
 
 impl Cfg {
-    fn new(db_user: String, db_password: String, db_port: String) -> Self {
-        Cfg {
-            db_url: format!(
-                "postgresql://{db_user}:{db_password}@localhost:{db_port}/backend_practice"
-            ),
-        }
+    pub fn db_url(&self) -> String {
+        format!("{}/{}", self.without_db_name(), self.db_name)
     }
-    pub fn get() -> &'static Self {
-        &CONFIG
+
+    pub fn without_db_name(&self) -> String {
+        format!(
+            "postgresql://{}:{}@localhost:{}",
+            self.db_user, self.db_password, self.db_port
+        )
+    }
+
+    pub fn init() -> Self {
+        dotenv::dotenv().ok();
+        let cfg = ConfigBuilder::<DefaultState>::default().add_source(Environment::default());
+
+        cfg.build()
+            .expect("cannot build config")
+            .try_deserialize()
+            .expect("cannot convert config")
     }
 }
