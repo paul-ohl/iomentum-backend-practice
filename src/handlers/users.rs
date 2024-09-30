@@ -3,8 +3,9 @@ use std::sync::Arc;
 use sqlx::PgPool;
 use warp::{reject::Rejection, reply::Reply};
 
-use super::errors::result_to_warp_reply;
-use crate::models::users::{self, UserInput};
+use crate::{
+    domain::dtos::user_dtos::UserInputDto, handlers::errors::result_to_warp_reply, models::users,
+};
 
 type ReplyRes<T> = Result<T, Rejection>;
 
@@ -23,21 +24,27 @@ pub async fn get_user_by_username(username: String, db_pool: Arc<PgPool>) -> Rep
     result_to_warp_reply(users)
 }
 
-pub async fn create_user(user_input: UserInput, db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
-    let user_id = users::create(db_pool, user_input).await;
-    result_to_warp_reply(user_id)
-}
-
 pub async fn update_user(
     id: uuid::Uuid,
-    user_input: UserInput,
+    user_input: UserInputDto,
     db_pool: Arc<PgPool>,
 ) -> ReplyRes<impl Reply> {
-    let user_id = users::update(db_pool, id, user_input).await;
-    result_to_warp_reply(user_id)
+    match user_input.try_into() {
+        Ok(user_modifications) => {
+            result_to_warp_reply(users::update(db_pool, id, user_modifications).await)
+        }
+        Err(e) => result_to_warp_reply(Err(e)),
+    }
 }
 
 pub async fn delete_user(id: uuid::Uuid, db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
-    let user_id = users::delete_one(db_pool, id).await;
+    let user_id = users::delete(db_pool, id).await;
     result_to_warp_reply(user_id)
+}
+
+pub async fn register_user(user_input: UserInputDto, db_pool: Arc<PgPool>) -> ReplyRes<impl Reply> {
+    match user_input.try_into() {
+        Ok(new_user) => result_to_warp_reply(users::create(db_pool, new_user).await),
+        Err(e) => result_to_warp_reply(Err(e)),
+    }
 }

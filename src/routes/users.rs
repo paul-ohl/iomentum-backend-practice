@@ -14,8 +14,9 @@ pub fn get_user_routes(
     get_all_users(db.clone())
         .or(get_by_id(db.clone()))
         .or(get_by_username(db.clone()))
-        .or(create_user(db.clone()))
+        .or(create_user(db.clone())) // Should I delete this?
         .or(update_user(db.clone()))
+        .or(register(db.clone()))
         .or(delete_user(db))
 }
 
@@ -47,7 +48,7 @@ fn create_user(db: Arc<PgPool>) -> impl Filter<Extract = impl Reply, Error = Rej
         .and(warp::post())
         .and(warp::body::json())
         .and(with_db(db))
-        .and_then(handlers::users::create_user)
+        .and_then(handlers::users::register_user)
 }
 
 fn update_user(db: Arc<PgPool>) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
@@ -63,4 +64,12 @@ fn delete_user(db: Arc<PgPool>) -> impl Filter<Extract = impl Reply, Error = Rej
         .and(warp::delete())
         .and(with_db(db))
         .and_then(handlers::users::delete_user)
+}
+
+fn register(db: Arc<PgPool>) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path!("register")
+        .and(warp::post())
+        .and(warp::body::json())
+        .and(with_db(db))
+        .and_then(handlers::users::register_user)
 }

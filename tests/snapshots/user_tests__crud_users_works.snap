@@ -1,0 +1,8 @@
+---
+source: tests/user_tests.rs
+expression: "response.json::<serde_json::Value>().await.unwrap()"
+---
+{
+  "message": "invalid password: Password must be at least 8 characters long",
+  "status": "fail"
+}

@@ -1,4 +1,5 @@
 use serde::Serialize;
+use serde_json::json;
 use warp::{
     http::StatusCode,
     reject::Rejection,
@@ -17,7 +18,10 @@ where
         Err(e) => {
             let message = e.to_string();
             Ok(reply::with_status(
-                reply::json(&message),
+                reply::json(&json!({
+                    "status": "fail",
+                    "message": message,
+                })),
                 to_http_status_code(e),
             ))
         }
@@ -38,5 +42,7 @@ fn to_http_status_code(e: Error) -> StatusCode {
         Error::TicketUpdateFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
         Error::TicketDeletionFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
         Error::InvalidPassword(_) => StatusCode::BAD_REQUEST,
+        Error::InvalidUsername(_) => StatusCode::BAD_REQUEST,
+        Error::InvalidRole(_) => StatusCode::BAD_REQUEST,
     }
 }

@@ -28,4 +28,8 @@ pub enum Error {
     TicketDeletionFailed(sqlx::Error),
     #[error("invalid password: {0}")]
     InvalidPassword(String),
+    #[error("invalid username: {0}")]
+    InvalidUsername(String),
+    #[error("invalid role: {0} does not exist")]
+    InvalidRole(String),
 }
