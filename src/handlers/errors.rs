@@ -30,6 +30,7 @@ where
 
 fn to_http_status_code(e: Error) -> StatusCode {
     match e {
+        Error::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         Error::UsernameAlreadyExists => StatusCode::CONFLICT,
         Error::UserNotFound => StatusCode::NO_CONTENT,
         Error::UserCreationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -44,5 +45,6 @@ fn to_http_status_code(e: Error) -> StatusCode {
         Error::InvalidPassword(_) => StatusCode::BAD_REQUEST,
         Error::InvalidUsername(_) => StatusCode::BAD_REQUEST,
         Error::InvalidRole(_) => StatusCode::BAD_REQUEST,
+        Error::LoginFailed(_) => StatusCode::UNAUTHORIZED,
     }
 }

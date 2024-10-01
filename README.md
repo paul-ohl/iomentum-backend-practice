@@ -1,4 +1,4 @@
-# Iommentum backend practice
+# Iomentum backend practice
 
 This project was created as part of my onboarding process at [IoMentum](https://www.iomentum.com/).
 

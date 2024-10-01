@@ -1,11 +1,12 @@
 use std::{convert::Infallible, sync::Arc};
 
-use sqlx::PgPool;
 use warp::Filter;
 
+use crate::AppState;
+
 /// This function is used to pass the database connection to the handler functions
-pub fn with_db(
-    db: Arc<PgPool>,
-) -> impl Filter<Extract = (Arc<PgPool>,), Error = Infallible> + Clone {
+pub fn with_state(
+    db: Arc<AppState>,
+) -> impl Filter<Extract = (Arc<AppState>,), Error = Infallible> + Clone {
     warp::any().map(move || db.clone())
 }

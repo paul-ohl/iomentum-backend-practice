@@ -4,6 +4,8 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("internal server error: {0}")]
+    InternalError(String),
     #[error("username already exists")]
     UsernameAlreadyExists,
     #[error("user not found")]
@@ -32,4 +34,6 @@ pub enum Error {
     InvalidUsername(String),
     #[error("invalid role: {0} does not exist")]
     InvalidRole(String),
+    #[error("login failed: {0}")]
+    LoginFailed(String),
 }

@@ -7,6 +7,7 @@ pub struct Cfg {
     pub db_password: String,
     pub db_port: String,
     pub db_name: String,
+    pub jwt_secret: String,
 }
 
 impl Cfg {

@@ -1,18 +1,21 @@
 use std::sync::Arc;
 
-use sqlx::PgPool;
 use warp::{reject::Rejection, reply::Reply, Filter};
 
 mod tickets;
 mod users;
-mod with_db;
+mod with_state;
 
-use with_db::with_db;
+use with_state::with_state;
 
-pub fn get_routes(db: Arc<PgPool>) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+use crate::AppState;
+
+pub fn get_routes(
+    app_state: Arc<AppState>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     health()
-        .or(tickets::get_ticket_routes(db.clone()))
-        .or(users::get_user_routes(db))
+        .or(tickets::get_ticket_routes(app_state.clone()))
+        .or(users::get_user_routes(app_state))
 }
 
 /// A simple health-check route

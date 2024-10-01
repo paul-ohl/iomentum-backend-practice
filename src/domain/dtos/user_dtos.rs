@@ -12,14 +12,20 @@ pub struct UserInputDto {
     pub role: String,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct UserLoginInputDto {
+    pub username: String,
+    pub password: String,
+}
+
 #[derive(Debug, Serialize)]
-pub struct NewUserDto {
+pub struct NewUser {
     pub username: Username,
     pub password_hash: PasswordHash,
     pub role: Role,
 }
 
-impl TryFrom<UserInputDto> for NewUserDto {
+impl TryFrom<UserInputDto> for NewUser {
     type Error = Error;
     fn try_from(value: UserInputDto) -> Result<Self, Self::Error> {
         Ok(Self {
