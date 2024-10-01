@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 use crate::domain::errors::{Error, Result};
@@ -20,6 +22,12 @@ impl Role {
 impl AsRef<str> for Role {
     fn as_ref(&self) -> &str {
         &self.0
+    }
+}
+
+impl Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
