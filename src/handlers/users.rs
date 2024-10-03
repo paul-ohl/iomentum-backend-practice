@@ -9,7 +9,7 @@ use crate::{
         types::JwtClaims,
     },
     handlers::errors::result_to_warp_reply,
-    models::users,
+    models::{tickets::TicketsModel, users},
     AppState,
 };
 
@@ -17,28 +17,31 @@ use super::password_hasher::verify;
 
 type ReplyRes<T> = Result<T, Rejection>;
 
-pub async fn get_all_users(app_state: Arc<AppState>) -> ReplyRes<impl Reply> {
+pub async fn get_all_users<TM: TicketsModel>(app_state: Arc<AppState<TM>>) -> ReplyRes<impl Reply> {
     let users = users::get_all(&app_state.db_pool).await;
     result_to_warp_reply(users)
 }
 
-pub async fn get_user_by_id(id: uuid::Uuid, app_state: Arc<AppState>) -> ReplyRes<impl Reply> {
+pub async fn get_user_by_id<TM: TicketsModel>(
+    id: uuid::Uuid,
+    app_state: Arc<AppState<TM>>,
+) -> ReplyRes<impl Reply> {
     let user = users::get_by_id(&app_state.db_pool, id).await;
     result_to_warp_reply(user)
 }
 
-pub async fn get_user_by_username(
+pub async fn get_user_by_username<TM: TicketsModel>(
     username: String,
-    app_state: Arc<AppState>,
+    app_state: Arc<AppState<TM>>,
 ) -> ReplyRes<impl Reply> {
     let users = users::get_by_username(&app_state.db_pool, username).await;
     result_to_warp_reply(users)
 }
 
-pub async fn update_user(
+pub async fn update_user<TM: TicketsModel>(
     id: uuid::Uuid,
     user_input: UserInputDto,
-    app_state: Arc<AppState>,
+    app_state: Arc<AppState<TM>>,
 ) -> ReplyRes<impl Reply> {
     match user_input.try_into() {
         Ok(user_modifications) => {
@@ -48,14 +51,17 @@ pub async fn update_user(
     }
 }
 
-pub async fn delete_user(id: uuid::Uuid, app_state: Arc<AppState>) -> ReplyRes<impl Reply> {
+pub async fn delete_user<TM: TicketsModel>(
+    id: uuid::Uuid,
+    app_state: Arc<AppState<TM>>,
+) -> ReplyRes<impl Reply> {
     let user_id = users::delete(&app_state.db_pool, id).await;
     result_to_warp_reply(user_id)
 }
 
-pub async fn register_user(
+pub async fn register_user<TM: TicketsModel>(
     user_input: UserInputDto,
-    app_state: Arc<AppState>,
+    app_state: Arc<AppState<TM>>,
 ) -> ReplyRes<impl Reply> {
     match user_input.try_into() {
         Ok(new_user) => result_to_warp_reply(users::create(&app_state.db_pool, new_user).await),
@@ -63,9 +69,9 @@ pub async fn register_user(
     }
 }
 
-pub async fn login_user(
+pub async fn login_user<TM: TicketsModel>(
     user_login_input: UserLoginInputDto,
-    app_state: Arc<AppState>,
+    app_state: Arc<AppState<TM>>,
 ) -> ReplyRes<impl Reply> {
     let res = match users::get_by_username_for_verification(
         &app_state.db_pool,

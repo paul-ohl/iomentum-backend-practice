@@ -2,11 +2,14 @@ use std::{convert::Infallible, sync::Arc};
 
 use warp::Filter;
 
-use crate::AppState;
+use crate::{models::tickets::TicketsModel, AppState};
 
 /// This function is used to pass the database connection to the handler functions
-pub fn with_state(
-    db: Arc<AppState>,
-) -> impl Filter<Extract = (Arc<AppState>,), Error = Infallible> + Clone {
-    warp::any().map(move || db.clone())
+pub fn with_state<TM>(
+    state: Arc<AppState<TM>>,
+) -> impl Filter<Extract = (Arc<AppState<TM>>,), Error = Infallible> + Clone
+where
+    TM: TicketsModel + Send + Sync + 'static,
+{
+    warp::any().map(move || state.clone())
 }

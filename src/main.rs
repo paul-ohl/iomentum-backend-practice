@@ -1,9 +1,18 @@
-use iomentum_backend_practice::{routes::get_routes, state::create_state, Cfg};
+use std::sync::Arc;
+
+use iomentum_backend_practice::{
+    models::pg_tickets::PgTicketsModel, routes::get_routes, AppState, Cfg,
+};
 
 #[tokio::main]
 async fn main() {
     let config = Cfg::init();
-    let app_state = create_state(config.db_url(), config.jwt_secret).await;
+
+    let ticket_model = PgTicketsModel::new(config.db_url())
+        .await
+        .expect("Failed to create ticket model");
+    let app_state = AppState::new(config.jwt_secret, ticket_model);
+    let app_state = Arc::new(app_state);
 
     let routes = get_routes(app_state);
 
