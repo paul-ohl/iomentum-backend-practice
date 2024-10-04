@@ -1,25 +1,26 @@
-use std::sync::Arc;
-
-use sqlx::{postgres::PgPoolOptions, PgPool};
-
-use crate::handlers::jwt_handler::JwtHandler;
+use crate::{
+    handlers::jwt_handler::JwtHandler,
+    models::{tickets::TicketsModel, users::UsersModel},
+};
 
 pub struct AppState {
-    pub db_pool: PgPool,
     pub jwt_handler: JwtHandler,
+    pub user_model: Box<dyn UsersModel>,
+    pub ticket_model: Box<dyn TicketsModel>,
 }
 
-pub async fn create_state(db_url: String, jwt_secret: String) -> Arc<AppState> {
-    let db_pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&db_url)
-        .await
-        .expect("cannot log to db");
+impl AppState {
+    pub fn new(
+        jwt_secret: String,
+        user_model: Box<dyn UsersModel>,
+        ticket_model: Box<dyn TicketsModel>,
+    ) -> Self {
+        let jwt_handler = JwtHandler::new(jwt_secret).expect("cannot create jwt handler");
 
-    let jwt_handler = JwtHandler::new(jwt_secret).expect("cannot create jwt handler");
-
-    Arc::new(AppState {
-        db_pool,
-        jwt_handler,
-    })
+        AppState {
+            jwt_handler,
+            user_model,
+            ticket_model,
+        }
+    }
 }

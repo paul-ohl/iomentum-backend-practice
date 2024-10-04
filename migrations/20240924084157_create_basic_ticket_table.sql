@@ -6,7 +6,7 @@ create table tickets (
   owner_name text not null,
 
   concert_name text not null,
-  concert_date date not null,
+  concert_date timestamptz not null,
   barcode_data text not null,
   price float not null,
 

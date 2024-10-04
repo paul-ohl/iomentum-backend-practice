@@ -12,7 +12,7 @@ pub fn get_ticket_routes(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     get_all_tickets(app_state.clone())
         .or(get_by_id(app_state.clone()))
-        .or(get_by_username(app_state.clone()))
+        .or(get_by_user(app_state.clone()))
         .or(create_ticket(app_state.clone()))
         .or(update_ticket(app_state.clone()))
         .or(delete_ticket(app_state))
@@ -36,7 +36,7 @@ fn get_by_id(
         .and_then(handlers::tickets::get_ticket_by_id)
 }
 
-fn get_by_username(
+fn get_by_user(
     app_state: Arc<AppState>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path!("tickets" / "by-user" / Uuid)

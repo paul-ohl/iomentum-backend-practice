@@ -25,6 +25,15 @@ impl PasswordHash {
         Ok(Self(hash.into()))
     }
 
+    /// Create a new PasswordHash from an already hashed password
+    /// This must **only** be used when loading a password from the database
+    ///
+    /// # Safety
+    /// This function is unsafe because it skips the password validation and hashing
+    pub unsafe fn new_unchecked(password_hash: String) -> Self {
+        Self(password_hash.into())
+    }
+
     pub fn expose_secret(&self) -> &str {
         self.0.expose_secret()
     }

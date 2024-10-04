@@ -2,14 +2,28 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::{
     errors::Error,
-    types::{PasswordHash, Role, Username},
+    types::{
+        user_types::{NewUser, User},
+        PasswordHash, Role, Username,
+    },
 };
 
 #[derive(Deserialize, Debug)]
-pub struct UserInputDto {
+pub struct NewUserDto {
     pub username: String,
     pub password: String,
     pub role: String,
+}
+
+impl TryFrom<NewUserDto> for NewUser {
+    type Error = Error;
+    fn try_from(value: NewUserDto) -> Result<Self, Self::Error> {
+        Ok(Self {
+            username: Username::new(&value.username)?,
+            password_hash: PasswordHash::new(&value.password)?,
+            role: Role::new(value.role)?,
+        })
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -18,20 +32,19 @@ pub struct UserLoginInputDto {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct NewUser {
-    pub username: Username,
-    pub password_hash: PasswordHash,
-    pub role: Role,
+#[derive(Serialize, Debug)]
+pub struct UserDto {
+    pub id: uuid::Uuid,
+    pub username: String,
+    pub role: String,
 }
 
-impl TryFrom<UserInputDto> for NewUser {
-    type Error = Error;
-    fn try_from(value: UserInputDto) -> Result<Self, Self::Error> {
-        Ok(Self {
-            username: Username::new(&value.username)?,
-            password_hash: PasswordHash::new(&value.password)?,
-            role: Role::new(value.role)?,
-        })
+impl From<User> for UserDto {
+    fn from(user: User) -> Self {
+        Self {
+            id: user.id,
+            username: user.username.as_ref().to_string(),
+            role: user.role.to_string(),
+        }
     }
 }

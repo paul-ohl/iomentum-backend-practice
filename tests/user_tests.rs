@@ -24,7 +24,7 @@ async fn crud_users_works() {
 
     assert!(response.status().is_success());
     let saved = sqlx::query!("SELECT id, username, password_hash, role FROM Users")
-        .fetch_one(&test_app.app_state.db_pool)
+        .fetch_one(&test_app.db_pool)
         .await
         .expect("Failed to fetch from db.");
     assert_eq!("test1", saved.username);
@@ -99,7 +99,7 @@ async fn crud_users_works() {
         .expect("Failed to execute request.");
     assert!(response.status().is_success());
     let saved = sqlx::query!("SELECT id, username, password_hash, role FROM Users")
-        .fetch_one(&test_app.app_state.db_pool)
+        .fetch_one(&test_app.db_pool)
         .await
         .expect("Failed to fetch from db.");
     assert_eq!("test3", saved.username);

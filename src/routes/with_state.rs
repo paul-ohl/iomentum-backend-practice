@@ -6,7 +6,7 @@ use crate::AppState;
 
 /// This function is used to pass the database connection to the handler functions
 pub fn with_state(
-    db: Arc<AppState>,
+    state: Arc<AppState>,
 ) -> impl Filter<Extract = (Arc<AppState>,), Error = Infallible> + Clone {
-    warp::any().map(move || db.clone())
+    warp::any().map(move || state.clone())
 }
