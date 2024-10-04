@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, prelude::FromRow, PgPool};
@@ -42,6 +43,7 @@ pub struct PgTicketsModel {
     db_pool: PgPool,
 }
 
+#[async_trait]
 impl TicketsModel for PgTicketsModel {
     async fn get_tickets(&self) -> Result<Vec<Ticket>> {
         let tickets: Vec<PgTicket> = sqlx::query_as("SELECT id, owner_id, concert_name, concert_date, barcode_data, price, created_at, updated_at FROM tickets")

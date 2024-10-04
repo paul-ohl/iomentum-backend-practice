@@ -1,5 +1,4 @@
-use std::future::Future;
-
+use async_trait::async_trait;
 use uuid::Uuid;
 
 use crate::domain::{
@@ -7,23 +6,17 @@ use crate::domain::{
     types::ticket_types::{NewTicket, Ticket},
 };
 
-pub trait TicketsModel {
-    fn get_tickets(&self) -> impl Future<Output = Result<Vec<Ticket>>> + Send;
+#[async_trait]
+pub trait TicketsModel: Send + Sync {
+    async fn get_tickets(&self) -> Result<Vec<Ticket>>;
 
-    fn get_ticket(&self, id: Uuid) -> impl Future<Output = Result<Ticket>> + Send;
+    async fn get_ticket(&self, id: Uuid) -> Result<Ticket>;
 
-    fn get_tickets_by_user(
-        &self,
-        user_id: Uuid,
-    ) -> impl Future<Output = Result<Vec<Ticket>>> + Send;
+    async fn get_tickets_by_user(&self, user_id: Uuid) -> Result<Vec<Ticket>>;
 
-    fn create_ticket(&self, ticket: NewTicket) -> impl Future<Output = Result<Uuid>> + Send;
+    async fn create_ticket(&self, ticket: NewTicket) -> Result<Uuid>;
 
-    fn update_ticket(
-        &self,
-        id: Uuid,
-        ticket: NewTicket,
-    ) -> impl Future<Output = Result<Uuid>> + Send;
+    async fn update_ticket(&self, id: Uuid, ticket: NewTicket) -> Result<Uuid>;
 
-    fn delete_ticket(&self, id: Uuid) -> impl Future<Output = Result<()>> + Send;
+    async fn delete_ticket(&self, id: Uuid) -> Result<()>;
 }

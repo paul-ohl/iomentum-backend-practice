@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use iomentum_backend_practice::handlers::password_hasher;
 use iomentum_backend_practice::models::pg_tickets::PgTicketsModel;
+use iomentum_backend_practice::models::pg_users::PgUsersModel;
 use iomentum_backend_practice::routes::get_routes;
 use iomentum_backend_practice::{AppState, Cfg};
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
@@ -28,7 +29,12 @@ pub async fn spawn_app() -> TestApp {
     let db_pool = configure_database(&config).await;
 
     let ticket_model = PgTicketsModel::new(config.db_url()).await.unwrap();
-    let app_state = AppState::new(config.jwt_secret, ticket_model);
+    let user_model = PgUsersModel::new(config.db_url()).await.unwrap();
+    let app_state = AppState::new(
+        config.jwt_secret,
+        Box::new(user_model),
+        Box::new(ticket_model),
+    );
     let app_state = Arc::new(app_state);
 
     let routes = get_routes(app_state.clone());

@@ -1,130 +1,27 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use sqlx::{prelude::FromRow, PgPool};
 use uuid::Uuid;
 
 use crate::domain::{
-    dtos::user_dtos::NewUser,
-    errors::{Error, Result},
+    errors::Result,
+    types::user_types::{InternalUseUser, NewUser, User},
 };
 
-#[derive(Serialize, Deserialize, FromRow)]
-pub struct User {
-    pub id: Uuid,
-    pub username: String,
-    pub password: String,
-    pub role: String,
+#[async_trait::async_trait]
+pub trait UsersModel: Send + Sync {
+    async fn get_users(&self) -> Result<Vec<User>>;
 
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
+    /// This function is used to get the user without the password hash
+    async fn get_user(&self, id: Uuid) -> Result<User>;
 
-#[derive(Serialize, Deserialize, FromRow)]
-pub struct UserResponse {
-    pub id: Uuid,
-    pub username: String,
-    pub role: String,
+    /// This function is used to get the user without the password hash
+    async fn get_user_by_username(&self, username: String) -> Result<User>;
 
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
+    /// This function is used internally to get the user with the password hash
+    /// Do not expose this function to the outside world
+    async fn get_user_by_username_interal(&self, username: String) -> Result<InternalUseUser>;
 
-#[derive(Serialize, Deserialize, FromRow)]
-pub struct UserLoginVerification {
-    pub id: Uuid,
-    pub username: String,
-    pub password_hash: String,
-    pub role: String,
-}
+    async fn create_user(&self, user: NewUser) -> Result<Uuid>;
 
-pub async fn get_all(db_pool: &PgPool) -> Result<Vec<UserResponse>> {
-    let users: Vec<UserResponse> =
-        sqlx::query_as("SELECT id, username, role, created_at, updated_at FROM users")
-            .fetch_all(db_pool)
-            .await
-            .map_err(Error::UserFetchFailed)?;
-    Ok(users)
-}
+    async fn update_user(&self, id: Uuid, user: NewUser) -> Result<Uuid>;
 
-pub async fn get_by_id(db_pool: &PgPool, id: Uuid) -> Result<UserResponse> {
-    let user: Option<UserResponse> = sqlx::query_as(
-        "SELECT id, username, role, created_at, updated_at FROM users WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(db_pool)
-    .await
-    .map_err(Error::UserFetchFailed)?;
-    match user {
-        Some(user) => Ok(user),
-        None => Err(Error::UserNotFound),
-    }
-}
-
-pub async fn get_by_username(db_pool: &PgPool, username: String) -> Result<UserResponse> {
-    let user: Option<UserResponse> = sqlx::query_as(
-        "SELECT id, username, role, created_at, updated_at FROM users WHERE username = $1",
-    )
-    .bind(username)
-    .fetch_optional(db_pool)
-    .await
-    .map_err(Error::UserFetchFailed)?;
-    match user {
-        Some(user) => Ok(user),
-        None => Err(Error::UserNotFound),
-    }
-}
-
-pub async fn get_by_username_for_verification(
-    db_pool: &PgPool,
-    username: String,
-) -> Result<UserLoginVerification> {
-    let user: Option<UserLoginVerification> =
-        sqlx::query_as("SELECT id, username, password_hash, role FROM users WHERE username = $1")
-            .bind(username)
-            .fetch_optional(db_pool)
-            .await
-            .map_err(Error::UserFetchFailed)?;
-    match user {
-        Some(user) => Ok(user),
-        None => Err(Error::UserNotFound),
-    }
-}
-
-pub async fn create(db_pool: &PgPool, new_user: NewUser) -> Result<Value> {
-    let res = sqlx::query!(
-        "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) returning id",
-        new_user.username.as_ref(),
-        new_user.password_hash.expose_secret(),
-        new_user.role.as_ref(),
-    )
-    .fetch_one(db_pool)
-    .await
-    .map_err(Error::UserCreationFailed)?
-    .id;
-    Ok(json!({ "id": res }))
-}
-
-pub async fn update(db_pool: &PgPool, id: Uuid, new_user: NewUser) -> Result<Value> {
-    let res = sqlx::query!("UPDATE users SET username = $1, password_hash = $2, role = $3, updated_at = $4 WHERE id = $5 returning id",
-            new_user.username.as_ref(),
-            new_user.password_hash.expose_secret(),
-            new_user.role.as_ref(),
-            Utc::now(),
-            id
-        )
-            .fetch_one(db_pool)
-            .await
-            .map_err(Error::UserUpdateFailed)?
-            .id;
-    Ok(json!({ "id": res }))
-}
-
-pub async fn delete(db_pool: &PgPool, id: Uuid) -> Result<Value> {
-    let res = sqlx::query!("DELETE FROM users WHERE id = $1 returning id", id)
-        .fetch_one(db_pool)
-        .await
-        .map_err(Error::UserDeletionFailed)?
-        .id;
-    Ok(json!({ "id": res }))
+    async fn delete_user(&self, id: Uuid) -> Result<()>;
 }
