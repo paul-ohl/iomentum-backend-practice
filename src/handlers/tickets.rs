@@ -8,7 +8,6 @@ use crate::{
         dtos::ticket_dtos::{TicketDto, TicketInputDto},
         errors::Error,
     },
-    models::tickets::TicketsModel,
     AppState,
 };
 
@@ -16,16 +15,24 @@ use super::errors::result_to_warp_reply;
 
 type ReplyRes<T> = Result<T, Rejection>;
 
-pub async fn get_all_tickets(app_state: Arc<AppState>) -> ReplyRes<impl Reply> {
-    let tickets = app_state.ticket_model.get_tickets().await;
-    let tickets = match tickets {
-        Ok(tickets) => Ok(tickets
-            .into_iter()
-            .map(|t| t.into())
-            .collect::<Vec<TicketDto>>()),
+pub async fn get_all_tickets(
+    app_state: Arc<AppState>,
+    encoded_jwt: String,
+) -> ReplyRes<impl Reply> {
+    let tickets_result = match app_state.jwt_handler.decode_token(&encoded_jwt) {
+        Ok(claims) => match app_state.ticket_model.get_tickets().await {
+            Ok(t) => {
+                if claims.role != "admin" {
+                    Err(Error::LoginFailed("Unauthorized".to_string()))
+                } else {
+                    Ok(t.into_iter().map(|t| t.into()).collect::<Vec<TicketDto>>())
+                }
+            }
+            Err(e) => Err(e),
+        },
         Err(e) => Err(e),
     };
-    result_to_warp_reply(tickets)
+    result_to_warp_reply(tickets_result)
 }
 
 pub async fn get_ticket_by_id(id: Uuid, app_state: Arc<AppState>) -> ReplyRes<impl Reply> {

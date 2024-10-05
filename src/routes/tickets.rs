@@ -24,6 +24,7 @@ fn get_all_tickets(
     warp::path!("tickets")
         .and(warp::get())
         .and(with_state(app_state))
+        .and(warp::header("Authorization"))
         .and_then(handlers::tickets::get_all_tickets)
 }
 
