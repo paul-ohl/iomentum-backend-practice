@@ -13,7 +13,6 @@ pub fn get_user_routes(
     get_all_users(app_state.clone())
         .or(get_by_id(app_state.clone()))
         .or(get_by_username(app_state.clone()))
-        .or(create_user(app_state.clone())) // Should I delete this?
         .or(update_user(app_state.clone()))
         .or(register(app_state.clone()))
         .or(delete_user(app_state.clone()))
@@ -45,16 +44,6 @@ fn get_by_username(
         .and(warp::get())
         .and(with_state(app_state))
         .and_then(handlers::users::get_user_by_username)
-}
-
-fn create_user(
-    app_state: Arc<AppState>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path!("users")
-        .and(warp::post())
-        .and(warp::body::json())
-        .and(with_state(app_state))
-        .and_then(handlers::users::register_user)
 }
 
 fn update_user(
